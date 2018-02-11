@@ -1,6 +1,5 @@
 package io.github.thomasvstevens.disperser;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
@@ -9,17 +8,22 @@ abstract public class Disperser {
   // layout searching
   protected Layout source;
   protected Layout current;
-  protected HashSet<Layout> seen;
+  protected RandomLayout rand;
+  protected double avgEnergySource;
+  protected double avgEnergyRand;
+  protected double avgEnergyMin;
   // optimization parameters
   protected int step;
   protected int maxSteps;
+  private static final int BEST_DELTA = -16;
 
   public Disperser(Layout source, int maxSteps) {
     this.source = source;
     this.maxSteps = maxSteps;
+    rand = new RandomLayout(source);
+    // Don't start from random. Local minimum likely for 8x12.
     current = source;
-    seen = new HashSet<Layout>(maxSteps);
-    seen.add(source);
+    step = 0;
   }
   
   public Disperser(Layout source) {
@@ -31,38 +35,54 @@ abstract public class Disperser {
   }
 
   public void minimize() {
-    ArrayList<Integer> affected;
+    Layout next = null;
+    // iterate until fixed point or iteration limit
+    while (current != next && step < maxSteps) {
+      if (next != null) {
+        current = next;
+      }
+      next = findSteepest();
+      step++;
+    }
+    avgEnergyMin = averageEnergy(current);
+  }
+
+  public Layout findSteepest() {
+    HashSet<Integer> affected;
     Layout move;
+    Layout minMove = current;
     int delta = 0;
     int minDelta = 0;
     int energy = 0;
-    boolean moved = true;
-    step = 0;
-    while (moved && step < maxSteps) {
-      minDelta = 0;
-      moved = false;
-      for (int a = 0; a < source.m * source.n; a++) {
-        for (int b = a + 1; b < source.m * source.n; b++) {
-          move = new Layout(current);
-          move.swapIds(a, b);
-          affected = move.affectedIds(a, b);
-          if (!seen.contains(move)) {
-            delta = 0;
-            for (int id : affected) {
-              energy = computeEnergy(move, id);
-              delta += energy - current.getEnergyById(id);
-            }
-            if (delta < minDelta) {
-              minDelta = delta;
-              current = move;
-              moved = true;
-            }
-          }
+    for (int a = 0; a < source.m * source.n; a++) {
+      for (int b = a + 1; b < source.m * source.n; b++) {
+        move = new Layout(current);
+        // randomize order of swap combinations
+        rand.permuteIds();
+        a = rand.getId(a);
+        b = rand.getId(b);
+        move.swapIds(a, b);
+        affected = move.affectedIds(a, b);
+        //if (!seen.contains(move)) {
+          //seen.add(move);
+        delta = 0;
+        for (int id : affected) {
+          energy = computeEnergy(move, id);
+          delta += energy - current.getEnergyById(id);
+        }
+        // return if found best possible energy change
+        if (delta == BEST_DELTA) {
+          System.out.println(step + "\t" + delta);
+          return move;
+        }
+        if (delta < minDelta) {
+          minDelta = delta;
+          minMove = move;
         }
       }
-      System.out.println(step + "\t" + delta);
-      step++;
     }
+    System.out.println(step + "\t" + minDelta);
+    return minMove;
   }
 
   abstract public int computeEnergy(Layout lay, int id);

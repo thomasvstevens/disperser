@@ -39,13 +39,11 @@ public class Layout {
 
   /** Deep copies of id[], energies[] */
   public Layout(Layout old) {
-    this.m = old.m;
-    this.n = old.n;
-    for (int k = 0; k < m * n; k++) {
+    this(old.m, old.n);
+    for (int k = 0; k < old.m * old.n; k++) {
       this.ids[k] = old.ids[k];
       this.energies[k] = old.energies[k];
     }
-    this.edgeIds = old.edgeIds;
   }
 
   public int getId(int i, int j) {
@@ -114,12 +112,19 @@ public class Layout {
   /** Get self and neighbors affected by swap
    * @return list of ids whose neighbors changed due to swap
    */
-  public ArrayList<Integer> affectedIds(int a, int b) {
-    ArrayList<Integer> affected = new ArrayList<Integer>();
+  public HashSet<Integer> affectedIds(int a, int b) {
+    HashSet<Integer> affected = new HashSet<Integer>();
     affected.add(a);
     affected.add(b);
-    affected.addAll(adj(a));
-    affected.addAll(adj(b));
+    for (int adja : adj(a)) {
+      affected.add(adja);
+    }
+    for (int adjb : adj(b)) {
+      affected.add(adjb);
+    }
+    for (int edge : edgeIds.values()) {
+      affected.remove(edge);
+    }
     return affected;
   }
 

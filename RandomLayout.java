@@ -15,6 +15,11 @@ public class RandomLayout extends Layout {
     this(8, 12);
   }
 
+  public RandomLayout(Layout lay) {
+    super(lay);
+    permuteIds();
+  }
+
   public void permuteIds() {
     for (int k = m * n - 1; k > 0; k--) {
       swapIds(k, rand.nextInt(k)); // 0 to k-1 inclusive
