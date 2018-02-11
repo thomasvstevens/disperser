@@ -1,4 +1,4 @@
-package io.github.thomasvstevens.disperser;
+package disperser;
 
 import java.util.HashSet;
 import java.util.PriorityQueue;
