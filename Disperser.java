@@ -5,6 +5,7 @@ import java.util.PriorityQueue;
 
 abstract public class Disperser {
 
+  protected String[] labels;
   // layout searching
   protected Layout source;
   protected Layout current;
@@ -16,6 +17,7 @@ abstract public class Disperser {
   protected int step;
   protected int maxSteps;
   private static final int BEST_DELTA = -16;
+  private static final double EPS = 0.0001;
 
   public Disperser(Layout source, int maxSteps) {
     this.source = source;
@@ -32,6 +34,16 @@ abstract public class Disperser {
 
   public Disperser() {
     this(new Layout(), 100);
+  }
+
+  protected void defaultLabels() {
+    labels = new String[source.m * source.n];
+    char[] rowLabels = "ABCDEFGH".toCharArray();
+    for (int i = 0; i < source.m; i++) {
+      for (int j = 0; j < source.n; j++) {
+        labels[i * source.n + j] = String.valueOf(rowLabels[i]) + String.valueOf(j + 1);
+      }
+    }
   }
 
   public void minimize() {
@@ -51,9 +63,9 @@ abstract public class Disperser {
     HashSet<Integer> affected;
     Layout move;
     Layout minMove = current;
-    int delta = 0;
-    int minDelta = 0;
-    int energy = 0;
+    double delta = 0.0;
+    double minDelta = 0.0;
+    double energy = 0.0;
     for (int a = 0; a < source.m * source.n; a++) {
       for (int b = a + 1; b < source.m * source.n; b++) {
         move = new Layout(current);
@@ -71,21 +83,21 @@ abstract public class Disperser {
           delta += energy - current.getEnergyById(id);
         }
         // return if found best possible energy change
-        if (delta == BEST_DELTA) {
-          System.out.println(step + "\t" + delta);
+        if (Math.abs(delta - BEST_DELTA) < EPS) {
+          System.out.printf(step + "\t" + "%2.6f" + "\n", delta);
           return move;
         }
-        if (delta < minDelta) {
+        if (delta < minDelta && Math.abs(delta - minDelta) > EPS) {
           minDelta = delta;
           minMove = move;
         }
       }
     }
-    System.out.println(step + "\t" + minDelta);
+    System.out.printf(step + "\t" + "%2.6f" + "\n", minDelta);
     return minMove;
   }
 
-  abstract public int computeEnergy(Layout lay, int id);
+  abstract public double computeEnergy(Layout lay, int id);
 
   public double averageEnergy(Layout lay) {
     double total = 0.0;
@@ -93,6 +105,33 @@ abstract public class Disperser {
       total += computeEnergy(lay, id);
     }
     return total / (lay.m * lay.n);
+  }
+
+  @Override
+  public String toString() {
+    if (labels == null) {
+      labels = new String[current.m * current.n];
+      for (int k = 0; k < current.m * current.n; k++) {
+        labels[current.getId(k)] = String.valueOf(current.getId(k));
+      }
+    }
+    StringBuilder sb = new StringBuilder();
+    for (int k = 0; k < current.m * current.n; k++) {
+      sb.append(labels[current.getId(k)]);
+      if (k % current.n == current.n - 1) {
+        sb.append("\n");
+      } else {
+        sb.append("\t");
+      }
+    }
+    return sb.toString();
+  }
+
+  protected void printExample(String header) {
+    System.out.println("=== " + header + " ===");
+    System.out.println(this);
+    System.out.println(" Average Energy = " + averageEnergy(current) + "\n");
+    current.printEnergies();
   }
 
 }

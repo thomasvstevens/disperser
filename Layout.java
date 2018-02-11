@@ -1,5 +1,6 @@
 package disperser;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,7 +13,7 @@ public class Layout {
   public final int n;
   // row-major order 1D arrays
   private int[] ids;
-  private int[] energies;
+  private double[] energies;
   // special element for each 2D boundary
   private static final int N_EDGES = 4;
   private static final String[] EDGES = {"top", "bottom", "left", "right"};
@@ -22,7 +23,8 @@ public class Layout {
     this.m = m;
     this.n = n;
     ids = new int[m * n];
-    energies = new int[m * n];
+    energies = new double[m * n];
+    Arrays.fill(energies, 0.0);
     int k = 0;
     while (k < m * n) {
       ids[k] = k++;
@@ -56,12 +58,12 @@ public class Layout {
     return ids[k];
   }
 
-  public int getEnergyById(int id) {
+  public double getEnergyById(int id) {
     checkBounds(id);
     return energies[id];
   }
 
-  public void setEnergyById(int id, int e) {
+  public void setEnergyById(int id, double e) {
     checkBounds(id);
     energies[id] = e;
   }
@@ -70,7 +72,7 @@ public class Layout {
     return adj(k / n, k % n);
   }
 
-  /** Return 4-neighbors of element (i,j) */
+  /** Return ids of 4-neighbors of element (i,j) */
   public HashSet<Integer> adj(int i, int j) {
     checkBounds(i, j);
     HashSet<Integer> adjSet = new HashSet<Integer>(4);
@@ -146,7 +148,7 @@ public class Layout {
 
   public void printEnergies() {
     for (int k = 0; k < m * n; k++) {
-      System.out.print(energies[ids[k]]);
+      System.out.printf("%3.1f", energies[ids[k]]);
       if (k % n == n - 1) {
         System.out.print("\n");
       } else {

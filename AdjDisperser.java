@@ -5,7 +5,6 @@ import java.util.HashSet;
 
 public class AdjDisperser extends Disperser {
 
-
   private ArrayList<HashSet<Integer>> adjSource;
   private static final int DEFAULT_MAX_STEPS = 1000;
 
@@ -24,11 +23,12 @@ public class AdjDisperser extends Disperser {
 
   public AdjDisperser() {
     this(new Layout(), DEFAULT_MAX_STEPS);
+    defaultLabels();
   }
 
   @Override
-  public int computeEnergy(Layout lay, int k) {
-    int e = 0;
+  public double computeEnergy(Layout lay, int k) {
+    double e = 0.0;
     int id = lay.getId(k);
     for (int a : lay.adj(k)) {
       if (adjSource.get(id).contains(a)) {
@@ -41,38 +41,11 @@ public class AdjDisperser extends Disperser {
 
   public static void main(String[] args) {
     Disperser d = new AdjDisperser();
-    System.out.println("=== default ===");
-    System.out.println(d.source);
-    System.out.println(" Average Energy = " + d.averageEnergy(d.source) + "\n");
-    d.source.printEnergies();
-    System.out.println("=== swap ===");
+    d.printExample("default");
     d.source.swapIds(0, 1);
-    System.out.println(d.source);
-    System.out.println(" Average Energy = " + d.averageEnergy(d.source) + "\n");
-    d.source.printEnergies();
-    System.out.println("=== random ===");
-    RandomLayout rl = new RandomLayout();
-    System.out.println(rl);
-    System.out.println(" Average Energy = " + d.averageEnergy(rl) + "\n");
-    rl.printEnergies();
-    System.out.println("=== minimized 4x6 quadrant ===");
-    d = new AdjDisperser(new Layout(4, 6));
-    d.minimize();
-    System.out.println(d.current);
-    d.current.printEnergies();
-    System.out.println(" Step = " + d.step +", Average Energy = " + d.averageEnergy(d.current) + "\n");
-    System.out.println("=== minimized 8x12 default ===");
-    d = new AdjDisperser(new Layout());
-    d.minimize();
-    System.out.println(d.current);
-    d.current.printEnergies();
-    System.out.println(" Step = " + d.step +", Average Energy = " + d.averageEnergy(d.current) + "\n");
-    System.out.println("=== larger: 384-well plate ===");
-    d = new AdjDisperser(new Layout(16, 24));
-    d.minimize();
-    System.out.println(d.current);
-    d.current.printEnergies();
-    System.out.println(" Step = " + d.step +", Average Energy = " + d.averageEnergy(d.current) + "\n");
+    d.printExample("swap");
+    d = new AdjDisperser(new RandomLayout());
+    d.printExample("random");
   }
 
 }
