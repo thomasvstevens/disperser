@@ -1,13 +1,15 @@
 package io.github.thomasvstevens.disperser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
 /** Container (m x n) for samples with energies. */
 public class Layout {
 
-  private final int m;
-  private final int n;
+  // m rows x n columns
+  public final int m;
+  public final int n;
   // row-major order 1D arrays
   private int[] ids;
   private int[] energies;
@@ -31,14 +33,43 @@ public class Layout {
     }
   }
 
+  public Layout() {
+    this(8, 12);
+  }
+
+  /** Deep copies of id[], energies[] */
+  public Layout(Layout old) {
+    this.m = old.m;
+    this.n = old.n;
+    for (int k = 0; k < m * n; k++) {
+      this.ids[k] = old.ids[k];
+      this.energies[k] = old.energies[k];
+    }
+    this.edgeIds = old.edgeIds;
+  }
+
   public int getId(int i, int j) {
     checkBounds(i, j);
     return ids[i * n + j];
   }
 
-  public int getEnergy(int i, int j) {
-    checkBounds(i, j);
-    return energies[i * n + j];
+  public int getId(int k) {
+    checkBounds(k);
+    return ids[k];
+  }
+
+  public int getEnergyById(int id) {
+    checkBounds(id);
+    return energies[id];
+  }
+
+  public void setEnergyById(int id, int e) {
+    checkBounds(id);
+    energies[id] = e;
+  }
+
+  public HashSet<Integer> adj(int k) {
+    return adj(k / n, k % n);
   }
 
   /** Return 4-neighbors of element (i,j) */
@@ -71,6 +102,26 @@ public class Layout {
     }
     return adjSet;
   }
+  /** Swap ids at two linear indices. */
+  public void swapIds(int a, int b) {
+    checkBounds(a);
+    checkBounds(b);
+    int tmp = ids[a];
+    ids[a] = ids[b];
+    ids[b] = tmp;
+  }
+
+  /** Get self and neighbors affected by swap
+   * @return list of ids whose neighbors changed due to swap
+   */
+  public ArrayList<Integer> affectedIds(int a, int b) {
+    ArrayList<Integer> affected = new ArrayList<Integer>();
+    affected.add(a);
+    affected.add(b);
+    affected.addAll(adj(a));
+    affected.addAll(adj(b));
+    return affected;
+  }
 
   private void checkBounds(int i, int j) {
     if (i * n + j > m * n - 1) {
@@ -78,8 +129,26 @@ public class Layout {
     }
   }
 
+  private void checkBounds(int k) {
+    if (k > m * n - 1) {
+      throw new IllegalArgumentException("Linear index " + k + " out of bounds.");
+    }
+  }
+
   public static String pairString(int i, int j) {
     return "(" + i + "," + j + ")";
+  }
+
+  public void printEnergies() {
+    for (int k = 0; k < m * n; k++) {
+      System.out.print(energies[ids[k]]);
+      if (k % n == n - 1) {
+        System.out.print("\n");
+      } else {
+        System.out.print("\t");
+      }
+    }
+    System.out.println();
   }
 
   @Override
@@ -99,6 +168,7 @@ public class Layout {
   public static void main(String[] args) {
     Layout lay = new Layout(8, 12);
     System.out.println(lay);
+    lay.printEnergies();
     System.out.println("Adj" + pairString(0, 0) + "=" + lay.adj(0, 0));
     System.out.println("Adj" + pairString(7, 0) + "=" + lay.adj(7, 0));
     System.out.println("Adj" + pairString(0, 11) + "=" + lay.adj(0, 11));
