@@ -16,7 +16,7 @@ abstract public class Disperser {
   // optimization parameters
   protected int step;
   protected int maxSteps;
-  private static final int BEST_DELTA = -16;
+  private static final double BEST_DELTA = -Double.MAX_VALUE;
   private static final double EPS = 0.0001;
 
   public Disperser(Layout source, int maxSteps) {
@@ -47,6 +47,7 @@ abstract public class Disperser {
   }
 
   public void minimize() {
+    System.out.println("Step\tDeltaE"); //log iterations
     Layout next = null;
     // iterate until fixed point or iteration limit
     while (current != next && step < maxSteps) {
@@ -60,12 +61,10 @@ abstract public class Disperser {
   }
 
   public Layout findSteepest() {
-    HashSet<Integer> affected;
     Layout move;
     Layout minMove = current;
-    double delta = 0.0;
     double minDelta = 0.0;
-    double energy = 0.0;
+    double delta = 0.0;
     for (int a = 0; a < source.m * source.n; a++) {
       for (int b = a + 1; b < source.m * source.n; b++) {
         move = new Layout(current);
@@ -74,14 +73,7 @@ abstract public class Disperser {
         a = rand.getId(a);
         b = rand.getId(b);
         move.swapIds(a, b);
-        affected = move.affectedIds(a, b);
-        //if (!seen.contains(move)) {
-          //seen.add(move);
-        delta = 0;
-        for (int id : affected) {
-          energy = computeEnergy(move, id);
-          delta += energy - current.getEnergyById(id);
-        }
+        delta = computeDelta(move, a, b);
         // return if found best possible energy change
         if (Math.abs(delta - BEST_DELTA) < EPS) {
           System.out.printf(step + "\t" + "%2.6f" + "\n", delta);
@@ -98,6 +90,17 @@ abstract public class Disperser {
   }
 
   abstract public double computeEnergy(Layout lay, int id);
+
+  public double computeDelta(Layout move, int a, int b) {
+    HashSet<Integer> affected = move.affectedIds(a, b);
+    double delta = 0.0;
+    double energy;
+    for (int id : affected) {
+      energy = computeEnergy(move, id);
+      delta += (energy - current.getEnergyById(id));
+    }
+    return delta;
+  }
 
   public double averageEnergy(Layout lay) {
     double total = 0.0;
@@ -127,11 +130,11 @@ abstract public class Disperser {
     return sb.toString();
   }
 
-  protected void printExample(String header) {
+  protected void printStatus(String header) {
     System.out.println("=== " + header + " ===");
-    System.out.println(this);
-    System.out.println(" Average Energy = " + averageEnergy(current) + "\n");
+    System.out.printf("\n  Average adjacency energy = %2.6f\n\n",  averageEnergy(current));
     current.printEnergies();
+    System.out.println(this);
   }
 
 }

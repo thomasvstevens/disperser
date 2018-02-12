@@ -6,6 +6,7 @@ import java.util.HashSet;
 public class AdjDisperser extends Disperser {
 
   private ArrayList<HashSet<Integer>> adjSource;
+  private static final double BEST_DELTA = -16;
   private static final int DEFAULT_MAX_STEPS = 1000;
 
   public AdjDisperser(Layout source, int maxSteps) {
@@ -40,12 +41,23 @@ public class AdjDisperser extends Disperser {
   }
 
   public static void main(String[] args) {
-    Disperser d = new AdjDisperser();
-    d.printExample("default");
-    d.source.swapIds(0, 1);
-    d.printExample("swap");
-    d = new AdjDisperser(new RandomLayout());
-    d.printExample("random");
+    AdjDisperser ad;
+    switch (args.length) {
+      case 0:  ad = new AdjDisperser();
+               break;
+      case 2:  ad = new AdjDisperser(
+                 new Layout(Integer.parseInt(args[0]), Integer.parseInt(args[1])));
+               break;
+      case 3:  ad = new AdjDisperser(
+                 new Layout(Integer.parseInt(args[0]), Integer.parseInt(args[1])),
+                   Integer.parseInt(args[2]));
+               break;
+      default: System.out.println("USAGE java disperser/AdjDisperser <m> <n> <maxIterations>");
+               return;
+  }
+  ad.printStatus("Input");
+  ad.minimize();
+  ad.printStatus("Output");
   }
 
 }

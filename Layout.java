@@ -18,6 +18,8 @@ public class Layout {
   private static final int N_EDGES = 4;
   private static final String[] EDGES = {"top", "bottom", "left", "right"};
   private HashMap<String, Integer> edgeIds;
+  HashMap<String, Integer> edgeCounts;
+  private double edgeEnergy;
 
   public Layout(int m, int n) {
     this.m = m;
@@ -39,12 +41,16 @@ public class Layout {
     this(8, 12);
   }
 
-  /** Deep copies of id[], energies[] */
+  /** Deep copies of id[], energies[], edgeCounts */
   public Layout(Layout old) {
     this(old.m, old.n);
     for (int k = 0; k < old.m * old.n; k++) {
       this.ids[k] = old.ids[k];
       this.energies[k] = old.energies[k];
+    }
+    if (old.edgeCounts != null) {
+      this.edgeCounts = new HashMap<String, Integer>(old.edgeCounts);
+      this.edgeEnergy = old.edgeEnergy;
     }
   }
 
@@ -68,40 +74,57 @@ public class Layout {
     energies[id] = e;
   }
 
+  public void setEdgeEnergy(double e) {
+    edgeEnergy = e;
+  }
+
+  public double getEdgeEnergy() {
+    return edgeEnergy;
+  }
+
   public HashSet<Integer> adj(int k) {
     return adj(k / n, k % n);
   }
 
-  /** Return ids of 4-neighbors of element (i,j) */
+  public ArrayList<Integer> adjList(int k) {
+    return adjList(k / n, k % n);
+  }
+
   public HashSet<Integer> adj(int i, int j) {
+    return new HashSet<Integer>(adjList(i, j));
+  }
+
+  /** Return ids of 4-neighbors of element (i,j) */
+  public ArrayList<Integer> adjList(int i, int j) {
     checkBounds(i, j);
-    HashSet<Integer> adjSet = new HashSet<Integer>(4);
+    ArrayList<Integer> a = new ArrayList<Integer>(4);
     // top
     if (i == 0) {
-      adjSet.add(edgeIds.get("top"));
+      a.add(edgeIds.get("top"));
     } else {
-      adjSet.add(ids[(i - 1) * n + j]);
+      a.add(ids[(i - 1) * n + j]);
     }
     // bottom
     if (i == m - 1) {
-      adjSet.add(edgeIds.get("bottom"));
+      a.add(edgeIds.get("bottom"));
     } else {
-      adjSet.add(ids[(i + 1) * n + j]);
+      a.add(ids[(i + 1) * n + j]);
     }
     // left
     if (j % n == 0) {
-      adjSet.add(edgeIds.get("left"));
+      a.add(edgeIds.get("left"));
     } else {
-      adjSet.add(ids[i * n + j - 1]);
+      a.add(ids[i * n + j - 1]);
     }
     // right
     if (j % n == n - 1) {
-      adjSet.add(edgeIds.get("right"));
+      a.add(edgeIds.get("right"));
     } else {
-      adjSet.add(ids[i * n + j + 1]);
+      a.add(ids[i * n + j + 1]);
     }
-    return adjSet;
+    return a;
   }
+
   /** Swap ids at two linear indices. */
   public void swapIds(int a, int b) {
     checkBounds(a);
@@ -128,6 +151,10 @@ public class Layout {
       affected.remove(edge);
     }
     return affected;
+  }
+
+  public boolean isEdgeId(int id) {
+    return edgeIds.values().contains(id);
   }
 
   private void checkBounds(int i, int j) {
