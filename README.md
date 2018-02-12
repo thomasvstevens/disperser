@@ -2,8 +2,11 @@
 _Disperse plate samples via steepest descent._
 
 ## Energy functions
-* AdjDisperser: repel each sample's original neighbors
-* GroupDisperser: repel other samples with the same label
+* AdjDisperser
+  * repel each sample's original neighbors, including original boundaries.
+* GroupDisperser
+  * repel other samples with the same label
+  * equalize boundary probability across groups
 
 ## Compile
 ```bash
@@ -12,11 +15,11 @@ javac disperser/*.java
 
 ## Usage
 ```bash
-java disperser/AdjDisperser
+java disperser/AdjDisperser <m> <n> <maxSteps>
 ```
 OR
 ```bash
-java disperser/GroupDisperser <group_layout.csv>
+java disperser/GroupDisperser layout.csv <maxSteps>
 ```
 
 ## Test
@@ -34,3 +37,10 @@ Prints layouts and energies for
 and shows timing.
 
 * 3min for 16x24 input on Chromebook Intel(R) Celeron(R) CPU N3050 @ 1.60GHz.
+
+```bash
+time java disperser/GroupDisperserTest
+```
+* IN PROGRESS
+* Capable of minimizing layout with 4 groups (PQRS.csv) to zero energy.
+
